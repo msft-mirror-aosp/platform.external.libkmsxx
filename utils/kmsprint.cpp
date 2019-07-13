@@ -68,10 +68,17 @@ static string format_connector(Connector& c)
 	str = sformat("Connector %u (%u) %s",
 		      c.idx(), c.id(), c.fullname().c_str());
 
-	if (c.connected())
+	switch (c.connector_status()) {
+	case ConnectorStatus::Connected:
 		str += " (connected)";
-	else
+		break;
+	case ConnectorStatus::Disconnected:
 		str += " (disconnected)";
+		break;
+	default:
+		str += " (unknown)";
+		break;
+	}
 
 	return str;
 }
@@ -134,7 +141,7 @@ static string format_fb(Framebuffer& fb)
 
 static string format_property(const Property* prop, uint64_t val)
 {
-	string ret = sformat("%s = ", prop->name().c_str());
+	string ret = sformat("%s (%u) = ", prop->name().c_str(), prop->id());
 
 	switch (prop->type()) {
 	case PropertyType::Bitmask:
@@ -490,7 +497,7 @@ static void usage()
 
 int main(int argc, char **argv)
 {
-	string dev_path = "/dev/dri/card0";
+	string dev_path;
 
 	OptionSet optionset = {
 		Option("|device=", [&dev_path](string s)
