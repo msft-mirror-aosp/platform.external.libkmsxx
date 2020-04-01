@@ -9,11 +9,11 @@ third_party {
     type: GIT
     value: "https://github.com/tomba/kmsxx"
   }
-  version: "a5545df02b40414c2bf3abc60cf629c5f59d00ec"
+  version: "cff8b2fd797537e36d5e16c1ac8e3303321e50b2"
   license_type: RECIPROCAL
   last_upgrade_date {
-    year: 2019
-    month: 7
-    day: 30
+    year: 2020
+    month: 4
+    day: 1
   }
 }
