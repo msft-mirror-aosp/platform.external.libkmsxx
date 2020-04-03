@@ -19,37 +19,20 @@ cc_library_shared {
     rtti: true,
 
     srcs: [
-        "kms++/src/atomicreq.cpp",
-        "kms++/src/card.cpp",
-        "kms++/src/crtc.cpp",
-        "kms++/src/drmpropobject.cpp",
-        "kms++/src/encoder.cpp",
-        "kms++/src/framebuffer.cpp",
-        "kms++/src/modedb_cea.cpp",
-        "kms++/src/modedb_dmt.cpp",
-        "kms++/src/pixelformats.cpp",
-        "kms++/src/property.cpp",
-        "kms++/src/blob.cpp",
-        "kms++/src/connector.cpp",
-        "kms++/src/drmobject.cpp",
-        "kms++/src/dumbframebuffer.cpp",
-        "kms++/src/extframebuffer.cpp",
-        "kms++/src/helpers.cpp",
-        "kms++/src/mode_cvt.cpp",
-        "kms++/src/modedb.cpp",
-        "kms++/src/plane.cpp",
-        "kms++/src/videomode.cpp",
+        "kms++/src/*.cpp",
     ],
 
     cflags: [
-        "-std=c++11",
+        "-DFMT_EXCEPTIONS=0",  // fmtlib is not built with exception.
         "-Wall",
         "-Wextra",
         "-Wno-unused-parameter",
         "-fexceptions",
+        "-include array",
     ],
 
     shared_libs: [
+        "libbase",  // for fmtlib
         "libdrm",
     ],
 
