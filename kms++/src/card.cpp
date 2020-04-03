@@ -1,9 +1,9 @@
-#include <stdio.h>
+#include <cstdio>
 #include <unistd.h>
 #include <fcntl.h>
 #include <utility>
 #include <stdexcept>
-#include <string.h>
+#include <cstring>
 #include <algorithm>
 #include <cerrno>
 #include <algorithm>
@@ -151,12 +151,12 @@ Card::Card(const std::string& driver, uint32_t idx)
 void Card::setup()
 {
 	drmVersionPtr ver = drmGetVersion(m_fd);
-	m_version_major = ver->version_major;
-	m_version_minor = ver->version_minor;
-	m_version_patchlevel = ver->version_patchlevel;
-	m_version_name = string(ver->name, ver->name_len);
-	m_version_date = string(ver->date, ver->date_len);
-	m_version_desc = string(ver->desc, ver->desc_len);
+	m_version.major = ver->version_major;
+	m_version.minor = ver->version_minor;
+	m_version.patchlevel = ver->version_patchlevel;
+	m_version.name = string(ver->name, ver->name_len);
+	m_version.date = string(ver->date, ver->date_len);
+	m_version.desc = string(ver->desc, ver->desc_len);
 	drmFreeVersion(ver);
 
 	int r;
@@ -296,7 +296,7 @@ DrmObject* Card::get_object(uint32_t id) const
 	return nullptr;
 }
 
-const vector<DrmObject*> Card::get_objects() const
+std::vector<kms::DrmObject*> Card::get_objects() const
 {
 	vector<DrmObject*> v;
 	for(auto pair : m_obmap)
