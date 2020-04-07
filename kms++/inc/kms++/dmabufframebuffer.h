@@ -2,16 +2,17 @@
 
 #include "framebuffer.h"
 #include "pixelformats.h"
+#include <vector>
 
 namespace kms
 {
 
-class DumbFramebuffer : public Framebuffer
+class DmabufFramebuffer : public Framebuffer
 {
 public:
-	DumbFramebuffer(Card& card, uint32_t width, uint32_t height, const std::string& fourcc);
-	DumbFramebuffer(Card& card, uint32_t width, uint32_t height, PixelFormat format);
-	~DumbFramebuffer() override;
+	DmabufFramebuffer(Card& card, uint32_t width, uint32_t height, PixelFormat format,
+			  std::vector<int> fds, std::vector<uint32_t> pitches, std::vector<uint32_t> offsets, std::vector<uint64_t> modifiers = {});
+	~DmabufFramebuffer() override;
 
 	uint32_t width() const override { return Framebuffer::width(); }
 	uint32_t height() const override { return Framebuffer::height(); }
@@ -26,6 +27,9 @@ public:
 	uint8_t* map(unsigned plane) override;
 	int prime_fd(unsigned plane) override;
 
+	void begin_cpu_access(CpuAccess access) override;
+	void end_cpu_access() override;
+
 private:
 	struct FramebufferPlane {
 		uint32_t handle;
@@ -33,6 +37,7 @@ private:
 		uint32_t size;
 		uint32_t stride;
 		uint32_t offset;
+		uint64_t modifier;
 		uint8_t *map;
 	};
 
@@ -40,5 +45,8 @@ private:
 	std::array<FramebufferPlane, 4> m_planes;
 
 	PixelFormat m_format;
+
+	uint32_t m_sync_flags = 0;
 };
+
 }
