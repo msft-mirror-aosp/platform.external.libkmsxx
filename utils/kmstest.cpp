@@ -234,12 +234,7 @@ static void parse_crtc(ResourceManager& resman, Card& card, const string& crtc_s
 		EXIT("Failed to parse crtc option '%s'", crtc_str.c_str());
 	}
 
-	if (output.crtc)
-		output.crtc = resman.reserve_crtc(output.crtc);
-	else
-		output.crtc = resman.reserve_crtc(output.connector);
-
-	if (!output.crtc)
+	if (!resman.reserve_crtc(output.crtc))
 		EXIT("Could not find available crtc");
 }
 
@@ -444,7 +439,7 @@ struct Arg
 	string arg;
 };
 
-static string s_device_path;
+static string s_device_path = "/dev/dri/card0";
 
 static vector<Arg> parse_cmdline(int argc, char **argv)
 {
@@ -637,9 +632,9 @@ static vector<OutputInfo> setups_to_outputs(Card& card, ResourceManager& resman,
 	}
 
 	if (outputs.empty()) {
-		// no outputs defined, show a pattern on all connected screens
+		// no outputs defined, show a pattern on all screens
 		for (Connector* conn : card.get_connectors()) {
-			if (conn->connector_status() != ConnectorStatus::Connected)
+			if (!conn->connected())
 				continue;
 
 			OutputInfo output = { };
@@ -691,22 +686,10 @@ static vector<OutputInfo> setups_to_outputs(Card& card, ResourceManager& resman,
 	return outputs;
 }
 
-static char sync_to_char(SyncPolarity pol)
-{
-	switch (pol) {
-	case SyncPolarity::Positive:
-		return '+';
-	case SyncPolarity::Negative:
-		return '-';
-	default:
-		return '?';
-	}
-}
-
 static std::string videomode_to_string(const Videomode& m)
 {
-	string h = sformat("%u/%u/%u/%u/%c", m.hdisplay, m.hfp(), m.hsw(), m.hbp(), sync_to_char(m.hsync()));
-	string v = sformat("%u/%u/%u/%u/%c", m.vdisplay, m.vfp(), m.vsw(), m.vbp(), sync_to_char(m.vsync()));
+	string h = sformat("%u/%u/%u/%u", m.hdisplay, m.hfp(), m.hsw(), m.hbp());
+	string v = sformat("%u/%u/%u/%u", m.vdisplay, m.vfp(), m.vsw(), m.vbp());
 
 	return sformat("%s %.3f %s %s %u (%.2f) %#x %#x",
 		       m.name.c_str(),
@@ -739,7 +722,7 @@ static void print_outputs(const vector<OutputInfo>& outputs)
 
 		if (!o.legacy_fbs.empty()) {
 			auto fb = o.legacy_fbs[0];
-			printf("    Fb %u %ux%u-%s\n", fb->id(), fb->width(), fb->height(), PixelFormatToFourCC(fb->format()).c_str());
+			printf(" (Fb %u %ux%u-%s)", fb->id(), fb->width(), fb->height(), PixelFormatToFourCC(fb->format()).c_str());
 		}
 
 		for (unsigned j = 0; j < o.planes.size(); ++j) {
@@ -781,41 +764,30 @@ static void set_crtcs_n_planes_legacy(Card& card, const vector<OutputInfo>& outp
 	}
 
 	for (const OutputInfo& o : outputs) {
-		int r;
 		auto conn = o.connector;
 		auto crtc = o.crtc;
 
-		for (const PropInfo& prop : o.conn_props) {
-			r = conn->set_prop_value(prop.prop, prop.val);
-			EXIT_IF(r, "failed to set connector property %s\n", prop.name.c_str());
-		}
-
-		for (const PropInfo& prop : o.crtc_props) {
-			r = crtc->set_prop_value(prop.prop, prop.val);
-			EXIT_IF(r, "failed to set crtc property %s\n", prop.name.c_str());
-		}
+		if (!o.conn_props.empty() || !o.crtc_props.empty())
+			printf("WARNING: properties not set without atomic modesetting");
 
 		if (!o.legacy_fbs.empty()) {
 			auto fb = o.legacy_fbs[0];
-			r = crtc->set_mode(conn, *fb, o.mode);
+			int r = crtc->set_mode(conn, *fb, o.mode);
 			if (r)
 				printf("crtc->set_mode() failed for crtc %u: %s\n",
 				       crtc->id(), strerror(-r));
 		}
 
 		for (const PlaneInfo& p : o.planes) {
-			for (const PropInfo& prop : p.props) {
-				r = p.plane->set_prop_value(prop.prop, prop.val);
-				EXIT_IF(r, "failed to set plane property %s\n", prop.name.c_str());
-			}
-
 			auto fb = p.fbs[0];
-			r = crtc->set_plane(p.plane, *fb,
+			int r = crtc->set_plane(p.plane, *fb,
 						p.x, p.y, p.w, p.h,
 						0, 0, fb->width(), fb->height());
 			if (r)
 				printf("crtc->set_plane() failed for plane %u: %s\n",
 				       p.plane->id(), strerror(-r));
+			if (!p.props.empty())
+				printf("WARNING: properties not set without atomic modesetting");
 		}
 	}
 }
@@ -1112,9 +1084,6 @@ int main(int argc, char **argv)
 	vector<Arg> output_args = parse_cmdline(argc, argv);
 
 	Card card(s_device_path);
-
-	if (!card.is_master())
-		EXIT("Could not get DRM master permission. Card already in use?");
 
 	if (!card.has_atomic() && s_flip_sync)
 		EXIT("Synchronized flipping requires atomic modesetting");

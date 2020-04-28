@@ -89,7 +89,7 @@ for i in range(0, len(conn_list)):
                     'CRTC_Y': 0,
                     'CRTC_W': mode.hdisplay,
                     'CRTC_H': mode.vdisplay,
-                    'zpos': 0})
+                    'zorder': 0})
 
     req.commit_sync(allow_modeset = True)
 
@@ -187,7 +187,7 @@ class bigFB_db:
                             'CRTC_Y': 0,
                             'CRTC_W': mode.hdisplay,
                             'CRTC_H': mode.vdisplay,
-                            'zpos': 0})
+                            'zorder': 0})
 
             screen_offset += mode.hdisplay
 
@@ -219,7 +219,7 @@ class bigFB_db:
                             'CRTC_Y': 0,
                             'CRTC_W': mode.hdisplay,
                             'CRTC_H': mode.vdisplay,
-                            'zpos': 0})
+                            'zorder': 0})
 
             screen_offset += mode.hdisplay
 

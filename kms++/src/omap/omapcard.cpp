@@ -9,6 +9,11 @@ using namespace std;
 
 namespace kms
 {
+OmapCard::OmapCard()
+	: OmapCard("/dev/dri/card0")
+{
+
+}
 
 OmapCard::OmapCard(const string& device)
 	: Card(device)

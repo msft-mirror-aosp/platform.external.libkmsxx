@@ -28,7 +28,6 @@ static const map<int, string> encoder_types = {
 	DEF_ENC(VIRTUAL),
 	DEF_ENC(DSI),
 	{ 7, "DPMST" },
-	{ 8, "DPI" },
 #undef DEF_ENC
 };
 
