@@ -21,7 +21,7 @@ option(BUILD_SHARED_LIBS "Build shared libs" FALSE)
 option(TREAT_WARNINGS_AS_ERRORS "Treat warnings as errors" FALSE)
 
 set(KMSXX_ENABLE_PYTHON ON CACHE BOOL "Enable Python wrappers")
-set(KMSXX_PYTHON_VERSION "python3;python2" CACHE STRING "Python pkgconfig package")
+set(KMSXX_PYTHON_VERSION "python3" CACHE STRING "Python pkgconfig package")
 
 set(KMSXX_ENABLE_KMSCUBE OFF CACHE BOOL "Enable kmscube")
 
@@ -31,7 +31,7 @@ set(KMSXX_ENABLE_LIBDRMOMAP ON CACHE BOOL "Enable OMAP-specific extensions")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wall")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wextra -Wno-unused-parameter")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Wno-unused-parameter")
 
 if (CMAKE_COMPILER_IS_GNUCC)
@@ -78,6 +78,8 @@ endif()
 if(LIBDRM_OMAP_FOUND)
     add_definitions(-DHAS_LIBDRM_OMAP)
 endif()
+
+pkg_check_modules(LIBEVDEV libevdev)
 
 enable_testing()
 

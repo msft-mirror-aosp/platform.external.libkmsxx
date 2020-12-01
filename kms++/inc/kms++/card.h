@@ -4,14 +4,14 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <string>
 
 #include "decls.h"
 #include "pipeline.h"
 
 namespace kms
 {
-struct CardVersion
-{
+struct CardVersion {
 	int major;
 	int minor;
 	int patchlevel;
@@ -23,15 +23,20 @@ struct CardVersion
 class Card
 {
 	friend class Framebuffer;
+
 public:
+	static std::unique_ptr<Card> open_named_card(const std::string& name);
+
 	Card(const std::string& dev_path = "");
 	Card(const std::string& driver, uint32_t idx);
+	Card(int fd, bool take_ownership);
 	virtual ~Card();
 
 	Card(const Card& other) = delete;
 	Card& operator=(const Card& other) = delete;
 
 	int fd() const { return m_fd; }
+	unsigned int dev_minor() const { return m_minor; }
 
 	void drop_master();
 
@@ -46,7 +51,7 @@ public:
 
 	bool is_master() const { return m_is_master; }
 	bool has_atomic() const { return m_has_atomic; }
-	bool has_has_universal_planes() const { return m_has_universal_planes; }
+	bool has_universal_planes() const { return m_has_universal_planes; }
 	bool has_dumb_buffers() const { return m_has_dumb; }
 	bool has_kms() const;
 
@@ -81,6 +86,7 @@ private:
 	std::vector<Framebuffer*> m_framebuffers;
 
 	int m_fd;
+	unsigned int m_minor;
 	bool m_is_master;
 
 	bool m_has_atomic;
@@ -89,4 +95,4 @@ private:
 
 	CardVersion m_version;
 };
-}
+} // namespace kms

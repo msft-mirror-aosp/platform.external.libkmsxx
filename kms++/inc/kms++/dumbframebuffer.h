@@ -1,11 +1,12 @@
 #pragma once
 
+#include <array>
+
 #include "framebuffer.h"
 #include "pixelformats.h"
 
 namespace kms
 {
-
 class DumbFramebuffer : public Framebuffer
 {
 public:
@@ -33,7 +34,7 @@ private:
 		uint32_t size;
 		uint32_t stride;
 		uint32_t offset;
-		uint8_t *map;
+		uint8_t* map;
 	};
 
 	unsigned m_num_planes;
@@ -41,4 +42,4 @@ private:
 
 	PixelFormat m_format;
 };
-}
+} // namespace kms
