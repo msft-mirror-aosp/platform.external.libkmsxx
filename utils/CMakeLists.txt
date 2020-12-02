@@ -1,6 +1,9 @@
 include_directories(${LIBDRM_INCLUDE_DIRS})
 link_directories(${LIBDRM_LIBRARY_DIRS})
 
+include_directories(${LIBEVDEV_INCLUDE_DIRS})
+link_directories(${LIBEVDEV_LIBRARY_DIRS})
+
 add_executable (kmstest kmstest.cpp)
 target_link_libraries(kmstest kms++ kms++util ${LIBDRM_LIBRARIES})
 
@@ -19,11 +22,16 @@ target_link_libraries(kmscapture kms++ kms++util ${LIBDRM_LIBRARIES})
 add_executable (kmsblank kmsblank.cpp)
 target_link_libraries(kmsblank kms++ kms++util ${LIBDRM_LIBRARIES})
 
-add_executable (wbcap wbcap.cpp)
-target_link_libraries(wbcap kms++ kms++util ${LIBDRM_LIBRARIES})
+if(LIBEVDEV_FOUND)
+    add_executable (kmstouch kmstouch.cpp)
+    target_link_libraries(kmstouch kms++ kms++util ${LIBDRM_LIBRARIES} ${LIBEVDEV_LIBRARIES})
+endif()
 
-add_executable (wbm2m wbm2m.cpp)
-target_link_libraries(wbm2m kms++ kms++util ${LIBDRM_LIBRARIES})
+add_executable (omap-wbcap omap-wbcap.cpp)
+target_link_libraries(omap-wbcap kms++ kms++util ${LIBDRM_LIBRARIES})
+
+add_executable (omap-wbm2m omap-wbm2m.cpp)
+target_link_libraries(omap-wbm2m kms++ kms++util ${LIBDRM_LIBRARIES})
 
 install(TARGETS kmstest kmsprint fbtest
     DESTINATION bin)
