@@ -1,15 +1,18 @@
 #pragma once
 
+#include <array>
+#include <vector>
+
 #include "framebuffer.h"
 #include "pixelformats.h"
-#include <vector>
 
 namespace kms
 {
-
 class DmabufFramebuffer : public Framebuffer
 {
 public:
+	DmabufFramebuffer(Card& card, uint32_t width, uint32_t height, const std::string& format,
+			  std::vector<int> fds, std::vector<uint32_t> pitches, std::vector<uint32_t> offsets, std::vector<uint64_t> modifiers = {});
 	DmabufFramebuffer(Card& card, uint32_t width, uint32_t height, PixelFormat format,
 			  std::vector<int> fds, std::vector<uint32_t> pitches, std::vector<uint32_t> offsets, std::vector<uint64_t> modifiers = {});
 	~DmabufFramebuffer() override;
@@ -38,7 +41,7 @@ private:
 		uint32_t stride;
 		uint32_t offset;
 		uint64_t modifier;
-		uint8_t *map;
+		uint8_t* map;
 	};
 
 	unsigned m_num_planes;
@@ -49,4 +52,4 @@ private:
 	uint32_t m_sync_flags = 0;
 };
 
-}
+} // namespace kms
