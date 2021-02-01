@@ -31,19 +31,17 @@ endif
 
 add_global_link_arguments(link_arguments, language : 'cpp')
 
-libfmt_includes = include_directories('ext/fmt/include')
-libfmt_dep = declare_dependency(include_directories : libfmt_includes,
-                                compile_args : '-DFMT_HEADER_ONLY')
-
-pybind11_includes = include_directories('ext/pybind11/include')
-pybind11_dep = declare_dependency(include_directories : pybind11_includes)
+libfmt_dep = dependency('fmt')
 
 libdrmomap_dep = dependency('libdrm_omap', required : get_option('omap'))
 
 subdir('kms++')
 
-if get_option('utils')
+if get_option('libutils')
     subdir('kms++util')
+endif
+
+if get_option('utils')
     subdir('utils')
 endif
 
