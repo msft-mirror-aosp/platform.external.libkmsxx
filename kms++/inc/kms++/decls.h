@@ -12,10 +12,9 @@ class DrmPropObject;
 class DumbFramebuffer;
 class Encoder;
 class ExtFramebuffer;
-class DmabufFramebuffer;
 class Framebuffer;
 class PageFlipHandlerBase;
 class Plane;
 class Property;
 struct Videomode;
-} // namespace kms
+}

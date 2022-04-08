@@ -11,6 +11,7 @@ using namespace std;
 
 namespace kms
 {
+
 Framebuffer::Framebuffer(Card& card, uint32_t width, uint32_t height)
 	: DrmObject(card, DRM_MODE_OBJECT_FB), m_width(width), m_height(height)
 {
@@ -36,7 +37,7 @@ Framebuffer::Framebuffer(Card& card, uint32_t id)
 
 void Framebuffer::flush()
 {
-	drmModeClip clip{};
+	drmModeClip clip { };
 	clip.x1 = clip.y1 = 0;
 	clip.x2 = width();
 	clip.y2 = height();
@@ -51,4 +52,5 @@ Framebuffer::~Framebuffer()
 	card().m_framebuffers.erase(iter);
 }
 
-} // namespace kms
+
+}

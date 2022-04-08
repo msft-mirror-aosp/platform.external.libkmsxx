@@ -8,14 +8,12 @@
 
 namespace kms
 {
+
 class DrmPropObject : public DrmObject
 {
 	friend class Card;
-
 public:
 	void refresh_props();
-
-	bool has_prop(const std::string& name) const { return !!get_prop(name); }
 
 	Property* get_prop(const std::string& name) const;
 
@@ -33,9 +31,9 @@ protected:
 	DrmPropObject(Card& card, uint32_t object_type);
 	DrmPropObject(Card& card, uint32_t id, uint32_t object_type, uint32_t idx = 0);
 
-	~DrmPropObject() override;
+	virtual ~DrmPropObject();
 
 private:
 	std::map<uint32_t, uint64_t> m_prop_values;
 };
-} // namespace kms
+}

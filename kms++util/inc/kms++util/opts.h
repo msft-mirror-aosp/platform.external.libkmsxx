@@ -7,7 +7,6 @@
 class Option
 {
 	friend class OptionSet;
-
 public:
 	Option(const std::string& str, std::function<void()> func);
 	Option(const std::string& str, std::function<void(const std::string)> func);

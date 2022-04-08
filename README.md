@@ -2,7 +2,7 @@
 
 # kms++ - C++ library for kernel mode setting
 
-kms++ is a C++17 library for kernel mode setting.
+kms++ is a C++11 library for kernel mode setting.
 
 Also included are some simple utilities for KMS and python bindings for kms++.
 
@@ -30,51 +30,55 @@ git submodule update --init
 And to compile:
 
 ```
-meson build
-ninja -C build
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make -j4
 ```
 
 ## Cross compiling instructions:
 
-```
-meson build --cross-file=<path-to-meson-cross-file>
-ninja -C build
-```
+Directions for cross compiling depend on your environment.
 
-Here is my cross file for arm32 (where ${BROOT} is path to my buildroot output dir):
+These are for mine with buildroot:
 
 ```
-[binaries]
-c = ['ccache', '${BROOT}/host/bin/arm-buildroot-linux-gnueabihf-gcc']
-cpp = ['ccache', '${BROOT}/host/bin/arm-buildroot-linux-gnueabihf-g++']
-ar = '${BROOT}/host/bin/arm-buildroot-linux-gnueabihf-ar'
-strip = '${BROOT}/host/bin/arm-buildroot-linux-gnueabihf-strip'
-pkgconfig = '${BROOT}/host/bin/pkg-config'
+$ mkdir build
+$ cd build
+$ cmake -DCMAKE_TOOLCHAIN_FILE=<buildrootpath>/output/host/usr/share/buildroot/toolchainfile.cmake ..
+$ make -j4
+```
 
-[host_machine]
-system = 'linux'
-cpu_family = 'arm'
-cpu = 'arm'
-endian = 'little'
+Your environment may provide similar toolchainfile. If not, you can create a toolchainfile of your own, something along these lines:
+
+```
+SET(CMAKE_SYSTEM_NAME Linux)
+
+SET(BROOT "<buildroot>/output/")
+
+# specify the cross compiler
+SET(CMAKE_C_COMPILER   ${BROOT}/host/usr/bin/arm-buildroot-linux-gnueabihf-gcc)
+SET(CMAKE_CXX_COMPILER ${BROOT}/host/usr/bin/arm-buildroot-linux-gnueabihf-g++)
+
+# where is the target environment
+SET(CMAKE_FIND_ROOT_PATH ${BROOT}/target ${BROOT}/host)
+
+SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
+SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 ```
 
 ## Build options
 
-You can use meson options to configure the build. E.g.
+You can use the following cmake flags to control the build. Use `-DFLAG=VALUE` to set them.
 
-```
-meson build -Dbuildtype=debug -Dkmscube=true
-```
-
-Use `meson configure build` to see all the configuration options and their current values.
-
-kms++ specific build options are:
-
-Option name      | Values                  | Default         | Notes
----------------- | -------------           | --------------- | --------
-pykms            | true, false             | true            | Python bindings
-kmscube          | true, false             | false           | GLES kmscube
-omap             | enabled, disabled, auto | auto            | libdrm-omap support
+Option name           | Values          | Default         | Notes
+--------------------- | -------------   | --------------- | --------
+CMAKE_BUILD_TYPE      | Release/Debug   | Release         |
+BUILD_SHARED_LIBS     | ON/OFF          | OFF             |
+KMSXX_ENABLE_PYTHON   | ON/OFF          | ON              |
+KMSXX_ENABLE_KMSCUBE  | ON/OFF          | OFF             |
+KMSXX_PYTHON_VERSION  | python3/python2 | python3;python2 | Name of the python pkgconfig file
 
 ## Env variables
 
@@ -93,4 +97,5 @@ You can run the python code directly from the build dir by defining PYTHONPATH e
 
 ```
 PYTHONPATH=build/py py/tests/hpd.py
+
 ```

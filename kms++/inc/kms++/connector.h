@@ -7,9 +7,11 @@
 
 namespace kms
 {
+
 struct ConnectorPriv;
 
-enum class ConnectorStatus {
+enum class ConnectorStatus
+{
 	Unknown,
 	Connected,
 	Disconnected,
@@ -18,7 +20,6 @@ enum class ConnectorStatus {
 class Connector : public DrmPropObject
 {
 	friend class Card;
-
 public:
 	void refresh();
 
@@ -43,12 +44,11 @@ public:
 	const std::string& subpixel_str() const;
 	std::vector<Videomode> get_modes() const;
 	std::vector<Encoder*> get_encoders() const;
-
 private:
 	Connector(Card& card, uint32_t id, uint32_t idx);
-	~Connector() override;
+	~Connector();
 
-	void setup() override;
+	void setup();
 	void restore_mode();
 
 	ConnectorPriv* m_priv;
@@ -59,4 +59,4 @@ private:
 
 	Crtc* m_saved_crtc;
 };
-} // namespace kms
+}

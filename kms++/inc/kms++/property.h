@@ -6,9 +6,11 @@
 
 namespace kms
 {
+
 struct PropertyPriv;
 
-enum class PropertyType {
+enum class PropertyType
+{
 	Range,
 	Enum,
 	Blob,
@@ -20,7 +22,6 @@ enum class PropertyType {
 class Property : public DrmObject
 {
 	friend class Card;
-
 public:
 	const std::string& name() const;
 
@@ -31,14 +32,13 @@ public:
 	std::map<uint64_t, std::string> get_enums() const;
 	std::vector<uint64_t> get_values() const;
 	std::vector<uint32_t> get_blob_ids() const;
-
 private:
 	Property(Card& card, uint32_t id);
-	~Property() override;
+	~Property();
 
 	PropertyType m_type;
 
 	PropertyPriv* m_priv;
 	std::string m_name;
 };
-} // namespace kms
+}

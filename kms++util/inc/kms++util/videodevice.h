@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <memory>
 #include <kms++/kms++.h>
 
 class VideoStreamer;
@@ -9,7 +8,8 @@ class VideoStreamer;
 class VideoDevice
 {
 public:
-	struct VideoFrameSize {
+	struct VideoFrameSize
+	{
 		uint32_t min_w, max_w, step_w;
 		uint32_t min_h, max_h, step_h;
 	};
@@ -50,8 +50,8 @@ private:
 	std::vector<kms::DumbFramebuffer*> m_capture_fbs;
 	std::vector<kms::DumbFramebuffer*> m_output_fbs;
 
-	std::unique_ptr<VideoStreamer> m_capture_streamer;
-	std::unique_ptr<VideoStreamer> m_output_streamer;
+	VideoStreamer* m_capture_streamer;
+	VideoStreamer* m_output_streamer;
 };
 
 class VideoStreamer

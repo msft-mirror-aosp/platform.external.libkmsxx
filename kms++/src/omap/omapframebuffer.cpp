@@ -18,22 +18,23 @@ extern "C" {
 }
 
 #define __round_mask(x, y) ((__typeof__(x))((y)-1))
-#define round_up(x, y) ((((x)-1) | __round_mask(x, y)) + 1)
+#define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
 #define PAGE_SIZE 4096
 
 using namespace std;
 
 namespace kms
 {
+
 OmapFramebuffer::OmapFramebuffer(OmapCard& card, uint32_t width, uint32_t height, const string& fourcc, Flags flags)
 	: OmapFramebuffer(card, width, height, FourCCToPixelFormat(fourcc), flags)
 {
 }
 
 OmapFramebuffer::OmapFramebuffer(OmapCard& card, uint32_t width, uint32_t height, PixelFormat format, Flags flags)
-	: Framebuffer(card, width, height), m_omap_card(card), m_format(format)
+	:Framebuffer(card, width, height), m_omap_card(card), m_format(format)
 {
-	Create(width, height, format, flags);
+	Create(flags);
 }
 
 OmapFramebuffer::~OmapFramebuffer()
@@ -41,9 +42,9 @@ OmapFramebuffer::~OmapFramebuffer()
 	Destroy();
 }
 
-void OmapFramebuffer::Create(uint32_t width, uint32_t height, PixelFormat format, Flags buffer_flags)
+void OmapFramebuffer::Create(Flags buffer_flags)
 {
-	const PixelFormatInfo& format_info = get_pixel_format_info(format);
+	const PixelFormatInfo& format_info = get_pixel_format_info(m_format);
 
 	m_num_planes = format_info.num_planes;
 
@@ -67,9 +68,9 @@ void OmapFramebuffer::Create(uint32_t width, uint32_t height, PixelFormat format
 		uint32_t stride;
 
 		if (!(buffer_flags & Flags::Tiled)) {
-			stride = width * pi.bitspp / 8;
+			stride = width() * pi.bitspp / 8;
 
-			uint32_t size = stride * height / pi.ysub;
+			uint32_t size = stride * height() / pi.ysub;
 
 			bo = omap_bo_new(m_omap_card.dev(), size, flags);
 			if (!bo)
@@ -77,46 +78,36 @@ void OmapFramebuffer::Create(uint32_t width, uint32_t height, PixelFormat format
 		} else {
 			unsigned bitspertiler;
 
-			switch (format) {
+			switch (m_format) {
 			case PixelFormat::NV12:
-				bitspertiler = i == 0 ? 8 : 16;
-				break;
+				bitspertiler = i == 0 ? 8 : 16; break;
 			case PixelFormat::YUYV:
 			case PixelFormat::UYVY:
-				bitspertiler = 32;
-				break;
+				bitspertiler = 32; break;
 			case PixelFormat::ARGB8888:
 			case PixelFormat::XRGB8888:
-				bitspertiler = 32;
-				break;
+				bitspertiler = 32; break;
 			case PixelFormat::RGB565:
-				bitspertiler = 16;
-				break;
+				bitspertiler = 16; break;
 			default:
 				throw invalid_argument("unimplemented format");
 			}
 
 			switch (bitspertiler) {
-			case 8:
-				flags |= OMAP_BO_TILED_8;
-				break;
-			case 16:
-				flags |= OMAP_BO_TILED_16;
-				break;
-			case 32:
-				flags |= OMAP_BO_TILED_32;
-				break;
+			case 8: flags |= OMAP_BO_TILED_8; break;
+			case 16: flags |= OMAP_BO_TILED_16; break;
+			case 32: flags |= OMAP_BO_TILED_32; break;
 			default:
 				throw invalid_argument("bad bitspertiler");
 			}
 
-			uint32_t width_tiler = width * pi.bitspp / bitspertiler;
+			uint32_t width_tiler = width() * pi.bitspp / bitspertiler;
 
-			bo = omap_bo_new_tiled(m_omap_card.dev(), width_tiler, height, flags);
+			bo = omap_bo_new_tiled(m_omap_card.dev(), width_tiler, height(), flags);
 			if (!bo)
 				throw invalid_argument(string("omap_bo_new_tiled failed: ") + strerror(errno));
 
-			stride = round_up(width * pi.bitspp / 8, PAGE_SIZE);
+			stride = round_up(width() * pi.bitspp / 8, PAGE_SIZE);
 		}
 
 		plane.omap_bo = bo;
@@ -133,8 +124,8 @@ void OmapFramebuffer::Create(uint32_t width, uint32_t height, PixelFormat format
 	uint32_t pitches[4] = { m_planes[0].stride, m_planes[1].stride };
 	uint32_t offsets[4] = { m_planes[0].offset, m_planes[1].offset };
 	uint32_t id;
-	int r = drmModeAddFB2(card().fd(), width, height, (uint32_t)format,
-			      bo_handles, pitches, offsets, &id, 0);
+	int r = drmModeAddFB2(card().fd(), width(), height(), (uint32_t)format(),
+			  bo_handles, pitches, offsets, &id, 0);
 	if (r)
 		throw invalid_argument(string("drmModeAddFB2 failed: ") + strerror(errno));
 
@@ -190,4 +181,4 @@ int OmapFramebuffer::prime_fd(unsigned int plane)
 	return fd;
 }
 
-} // namespace kms
+}

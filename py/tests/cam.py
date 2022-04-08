@@ -3,19 +3,10 @@
 import sys
 import selectors
 import pykms
-import argparse
-import time
 
-parser = argparse.ArgumentParser()
-parser.add_argument("width", type=int)
-parser.add_argument("height", type=int)
-args = parser.parse_args()
-
-w = args.width
-h = args.height
+w = 640
+h = 480
 fmt = pykms.PixelFormat.YUYV
-
-print("Capturing in {}x{}".format(w, h))
 
 card = pykms.Card()
 res = pykms.ResourceManager(card)

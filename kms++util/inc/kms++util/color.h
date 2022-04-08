@@ -14,7 +14,8 @@ enum class YUVType {
 	MAX,
 };
 
-struct RGB {
+struct RGB
+{
 	RGB();
 	RGB(uint8_t r, uint8_t g, uint8_t b);
 	RGB(uint8_t a, uint8_t r, uint8_t g, uint8_t b);
@@ -33,7 +34,6 @@ struct RGB {
 	uint32_t rgba1010102() const;
 	uint32_t bgra1010102() const;
 
-	uint8_t rgb332() const;
 	uint16_t rgb565() const;
 	uint16_t bgr565() const;
 	uint16_t argb4444() const;
@@ -46,7 +46,8 @@ struct RGB {
 	uint8_t a;
 };
 
-struct YUV {
+struct YUV
+{
 	YUV();
 	YUV(uint8_t y, uint8_t u, uint8_t v);
 	YUV(const RGB& rgb, YUVType type = YUVType::BT601_Lim);
@@ -56,4 +57,4 @@ struct YUV {
 	uint8_t y;
 	uint8_t a;
 };
-} // namespace kms
+}

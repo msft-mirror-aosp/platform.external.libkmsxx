@@ -15,32 +15,16 @@
 using namespace std;
 using namespace kms;
 
-/*
- * V4L2 and DRM differ in their interpretation of YUV420::NV12
- *
- * V4L2 NV12 is a Y and UV co-located planes in a single plane buffer.
- * DRM NV12 is a Y and UV planes presented as dual plane buffer,
- * which is known as NM12 in V4L2.
- *
- * Since here we have hybrid DRM/V4L2 user space helper functions
- * we need to translate DRM::NV12 to V4L2:NM12 pixel format back
- * and forth to keep the data view consistent.
- */
-
 /* V4L2 helper funcs */
 static vector<PixelFormat> v4l2_get_formats(int fd, uint32_t buf_type)
 {
 	vector<PixelFormat> v;
 
-	v4l2_fmtdesc desc{};
+	v4l2_fmtdesc desc { };
 	desc.type = buf_type;
 
 	while (ioctl(fd, VIDIOC_ENUM_FMT, &desc) == 0) {
-		if (desc.pixelformat == V4L2_PIX_FMT_NV12M)
-			v.push_back(PixelFormat::NV12);
-		else if (desc.pixelformat != V4L2_PIX_FMT_NV12)
-			v.push_back((PixelFormat)desc.pixelformat);
-
+		v.push_back((PixelFormat)desc.pixelformat);
 		desc.index++;
 	}
 
@@ -51,7 +35,7 @@ static void v4l2_set_format(int fd, PixelFormat fmt, uint32_t width, uint32_t he
 {
 	int r;
 
-	v4l2_format v4lfmt{};
+	v4l2_format v4lfmt { };
 
 	v4lfmt.type = buf_type;
 	r = ioctl(fd, VIDIOC_G_FMT, &v4lfmt);
@@ -63,14 +47,8 @@ static void v4l2_set_format(int fd, PixelFormat fmt, uint32_t width, uint32_t he
 
 	if (mplane) {
 		v4l2_pix_format_mplane& mp = v4lfmt.fmt.pix_mp;
-		uint32_t used_fmt;
 
-		if (fmt == PixelFormat::NV12)
-			used_fmt = V4L2_PIX_FMT_NV12M;
-		else
-			used_fmt = (uint32_t)fmt;
-
-		mp.pixelformat = used_fmt;
+		mp.pixelformat = (uint32_t)fmt;
 		mp.width = width;
 		mp.height = height;
 
@@ -87,7 +65,7 @@ static void v4l2_set_format(int fd, PixelFormat fmt, uint32_t width, uint32_t he
 		r = ioctl(fd, VIDIOC_S_FMT, &v4lfmt);
 		ASSERT(r == 0);
 
-		ASSERT(mp.pixelformat == used_fmt);
+		ASSERT(mp.pixelformat == (uint32_t)fmt);
 		ASSERT(mp.width == width);
 		ASSERT(mp.height == height);
 
@@ -177,7 +155,7 @@ static void v4l2_set_selection(int fd, uint32_t& left, uint32_t& top, uint32_t& 
 
 static void v4l2_request_bufs(int fd, uint32_t queue_size, uint32_t buf_type)
 {
-	v4l2_requestbuffers v4lreqbuf{};
+	v4l2_requestbuffers v4lreqbuf { };
 	v4lreqbuf.type = buf_type;
 	v4lreqbuf.memory = V4L2_MEMORY_DMABUF;
 	v4lreqbuf.count = queue_size;
@@ -188,7 +166,7 @@ static void v4l2_request_bufs(int fd, uint32_t queue_size, uint32_t buf_type)
 
 static void v4l2_queue_dmabuf(int fd, uint32_t index, DumbFramebuffer* fb, uint32_t buf_type)
 {
-	v4l2_buffer buf{};
+	v4l2_buffer buf { };
 	buf.type = buf_type;
 	buf.memory = V4L2_MEMORY_DMABUF;
 	buf.index = index;
@@ -200,7 +178,7 @@ static void v4l2_queue_dmabuf(int fd, uint32_t index, DumbFramebuffer* fb, uint3
 	if (mplane) {
 		buf.length = pfi.num_planes;
 
-		v4l2_plane planes[4]{};
+		v4l2_plane planes[4] { };
 		buf.m.planes = planes;
 
 		for (unsigned i = 0; i < pfi.num_planes; ++i) {
@@ -221,12 +199,12 @@ static void v4l2_queue_dmabuf(int fd, uint32_t index, DumbFramebuffer* fb, uint3
 
 static uint32_t v4l2_dequeue(int fd, uint32_t buf_type)
 {
-	v4l2_buffer buf{};
+	v4l2_buffer buf { };
 	buf.type = buf_type;
 	buf.memory = V4L2_MEMORY_DMABUF;
 
 	// V4L2 crashes if planes are not set
-	v4l2_plane planes[4]{};
+	v4l2_plane planes[4] { };
 	buf.m.planes = planes;
 	buf.length = 4;
 
@@ -237,18 +215,20 @@ static uint32_t v4l2_dequeue(int fd, uint32_t buf_type)
 	return buf.index;
 }
 
+
+
+
 VideoDevice::VideoDevice(const string& dev)
-	: VideoDevice(::open(dev.c_str(), O_RDWR | O_NONBLOCK))
+	:VideoDevice(::open(dev.c_str(), O_RDWR | O_NONBLOCK))
 {
 }
 
 VideoDevice::VideoDevice(int fd)
-	: m_fd(fd), m_has_capture(false), m_has_output(false), m_has_m2m(false)
+	: m_fd(fd), m_has_capture(false), m_has_output(false), m_has_m2m(false), m_capture_streamer(0), m_output_streamer(0)
 {
-	if (fd < 0)
-		throw runtime_error("bad fd");
+	FAIL_IF(fd < 0, "Bad fd");
 
-	struct v4l2_capability cap = {};
+	struct v4l2_capability cap = { };
 	int r = ioctl(fd, VIDIOC_QUERYCAP, &cap);
 	ASSERT(r == 0);
 
@@ -296,10 +276,10 @@ VideoStreamer* VideoDevice::get_capture_streamer()
 
 	if (!m_capture_streamer) {
 		auto type = m_has_mplane_capture ? VideoStreamer::StreamerType::CaptureMulti : VideoStreamer::StreamerType::CaptureSingle;
-		m_capture_streamer = std::unique_ptr<VideoStreamer>(new VideoStreamer(m_fd, type));
+		m_capture_streamer = new VideoStreamer(m_fd, type);
 	}
 
-	return m_capture_streamer.get();
+	return m_capture_streamer;
 }
 
 VideoStreamer* VideoDevice::get_output_streamer()
@@ -308,17 +288,17 @@ VideoStreamer* VideoDevice::get_output_streamer()
 
 	if (!m_output_streamer) {
 		auto type = m_has_mplane_output ? VideoStreamer::StreamerType::OutputMulti : VideoStreamer::StreamerType::OutputSingle;
-		m_output_streamer = std::unique_ptr<VideoStreamer>(new VideoStreamer(m_fd, type));
+		m_output_streamer = new VideoStreamer(m_fd, type);
 	}
 
-	return m_output_streamer.get();
+	return m_output_streamer;
 }
 
 vector<tuple<uint32_t, uint32_t>> VideoDevice::get_discrete_frame_sizes(PixelFormat fmt)
 {
 	vector<tuple<uint32_t, uint32_t>> v;
 
-	v4l2_frmsizeenum v4lfrms{};
+	v4l2_frmsizeenum v4lfrms { };
 	v4lfrms.pixel_format = (uint32_t)fmt;
 
 	int r = ioctl(m_fd, VIDIOC_ENUM_FRAMESIZES, &v4lfrms);
@@ -336,7 +316,7 @@ vector<tuple<uint32_t, uint32_t>> VideoDevice::get_discrete_frame_sizes(PixelFor
 
 VideoDevice::VideoFrameSize VideoDevice::get_frame_sizes(PixelFormat fmt)
 {
-	v4l2_frmsizeenum v4lfrms{};
+	v4l2_frmsizeenum v4lfrms { };
 	v4lfrms.pixel_format = (uint32_t)fmt;
 
 	int r = ioctl(m_fd, VIDIOC_ENUM_FRAMESIZES, &v4lfrms);
@@ -368,13 +348,10 @@ vector<string> VideoDevice::get_capture_devices()
 		if (stat(name.c_str(), &buffer) != 0)
 			continue;
 
-		try {
-			VideoDevice vid(name);
+		VideoDevice vid(name);
 
-			if (vid.has_capture() && !vid.has_m2m())
-				v.push_back(name);
-		} catch (...) {
-		}
+		if (vid.has_capture() && !vid.has_m2m())
+			v.push_back(name);
 	}
 
 	return v;
@@ -391,21 +368,20 @@ vector<string> VideoDevice::get_m2m_devices()
 		if (stat(name.c_str(), &buffer) != 0)
 			continue;
 
-		try {
-			VideoDevice vid(name);
+		VideoDevice vid(name);
 
-			if (vid.has_m2m())
-				v.push_back(name);
-		} catch (...) {
-		}
+		if (vid.has_m2m())
+			v.push_back(name);
 	}
 
 	return v;
 }
 
+
 VideoStreamer::VideoStreamer(int fd, StreamerType type)
 	: m_fd(fd), m_type(type)
 {
+
 }
 
 std::vector<string> VideoStreamer::get_ports()
@@ -414,9 +390,9 @@ std::vector<string> VideoStreamer::get_ports()
 
 	switch (m_type) {
 	case StreamerType::CaptureSingle:
-	case StreamerType::CaptureMulti: {
-		struct v4l2_input input {
-		};
+	case StreamerType::CaptureMulti:
+	{
+		struct v4l2_input input { };
 
 		while (ioctl(m_fd, VIDIOC_ENUMINPUT, &input) == 0) {
 			v.push_back(string((char*)&input.name));
@@ -427,9 +403,9 @@ std::vector<string> VideoStreamer::get_ports()
 	}
 
 	case StreamerType::OutputSingle:
-	case StreamerType::OutputMulti: {
-		struct v4l2_output output {
-		};
+	case StreamerType::OutputMulti:
+	{
+		struct v4l2_output output { };
 
 		while (ioctl(m_fd, VIDIOC_ENUMOUTPUT, &output) == 0) {
 			v.push_back(string((char*)&output.name));

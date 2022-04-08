@@ -213,19 +213,19 @@ private:
 		draw_bar(fb, m_frame_num);
 
 		req.add(m_plane, {
-					 { "CRTC_ID", m_crtc->id() },
-					 { "FB_ID", fb->id() },
+				{ "CRTC_ID", m_crtc->id() },
+				{ "FB_ID", fb->id() },
 
-					 { "CRTC_X", 0 },
-					 { "CRTC_Y", 0 },
-					 { "CRTC_W", min((uint32_t)m_crtc->mode().hdisplay, fb->width()) },
-					 { "CRTC_H", min((uint32_t)m_crtc->mode().vdisplay, fb->height()) },
+				{ "CRTC_X", 0 },
+				{ "CRTC_Y", 0 },
+				{ "CRTC_W", min((uint32_t)m_crtc->mode().hdisplay, fb->width()) },
+				{ "CRTC_H", min((uint32_t)m_crtc->mode().vdisplay, fb->height()) },
 
-					 { "SRC_X", 0 },
-					 { "SRC_Y", 0 },
-					 { "SRC_W", fb->width() << 16 },
-					 { "SRC_H", fb->height() << 16 },
-				 });
+				{ "SRC_X", 0 },
+				{ "SRC_Y", 0 },
+				{ "SRC_W", fb->width() << 16 },
+				{ "SRC_H", fb->height() << 16 },
+			});
 
 		int r = req.commit(this);
 		if (r)
@@ -247,15 +247,16 @@ private:
 };
 
 static const char* usage_str =
-	"Usage: wbcap [OPTIONS]\n\n"
-	"Options:\n"
-	"  -s, --src=CONN            Source connector\n"
-	"  -d, --dst=CONN            Destination connector\n"
-	"  -m, --smode=MODE          Source connector videomode\n"
-	"  -M, --dmode=MODE          Destination connector videomode\n"
-	"  -f, --format=4CC          Format\n"
-	"  -w, --write               Write captured frames to wbcap.raw file\n"
-	"  -h, --help                Print this help\n";
+		"Usage: wbcap [OPTIONS]\n\n"
+		"Options:\n"
+		"  -s, --src=CONN            Source connector\n"
+		"  -d, --dst=CONN            Destination connector\n"
+		"  -m, --smode=MODE          Source connector videomode\n"
+		"  -M, --dmode=MODE          Destination connector videomode\n"
+		"  -f, --format=4CC          Format\n"
+		"  -w, --write               Write captured frames to wbcap.raw file\n"
+		"  -h, --help                Print this help\n"
+		;
 
 int main(int argc, char** argv)
 {
@@ -267,25 +268,32 @@ int main(int argc, char** argv)
 	bool write_file = false;
 
 	OptionSet optionset = {
-		Option("s|src=", [&](string s) {
+		Option("s|src=", [&](string s)
+		{
 			src_conn_name = s;
 		}),
-		Option("m|smode=", [&](string s) {
+		Option("m|smode=", [&](string s)
+		{
 			src_mode_name = s;
 		}),
-		Option("d|dst=", [&](string s) {
+		Option("d|dst=", [&](string s)
+		{
 			dst_conn_name = s;
 		}),
-		Option("M|dmode=", [&](string s) {
+		Option("M|dmode=", [&](string s)
+		{
 			dst_mode_name = s;
 		}),
-		Option("f|format=", [&](string s) {
+		Option("f|format=", [&](string s)
+		{
 			pixfmt = FourCCToPixelFormat(s);
 		}),
-		Option("w|write", [&]() {
+		Option("w|write", [&]()
+		{
 			write_file = true;
 		}),
-		Option("h|help", [&]() {
+		Option("h|help", [&]()
+		{
 			puts(usage_str);
 			exit(-1);
 		}),
@@ -318,6 +326,7 @@ int main(int argc, char** argv)
 	Videomode src_mode = src_mode_name.empty() ? src_conn->get_default_mode() : src_conn->get_mode(src_mode_name);
 	src_crtc->set_mode(src_conn, src_mode);
 
+
 	auto dst_conn = resman.reserve_connector(dst_conn_name);
 	auto dst_crtc = resman.reserve_crtc(dst_conn);
 	auto dst_plane = resman.reserve_overlay_plane(dst_crtc, pixfmt);
@@ -333,9 +342,9 @@ int main(int argc, char** argv)
 	if (src_mode.interlace())
 		dst_height /= 2;
 
-	printf("src %s, crtc %s\n", src_conn->fullname().c_str(), src_mode.to_string_short().c_str());
+	printf("src %s, crtc %s\n", src_conn->fullname().c_str(), src_mode.to_string().c_str());
 
-	printf("dst %s, crtc %s\n", dst_conn->fullname().c_str(), dst_mode.to_string_short().c_str());
+	printf("dst %s, crtc %s\n", dst_conn->fullname().c_str(), dst_mode.to_string().c_str());
 
 	printf("src_fb %ux%u, dst_fb %ux%u\n", src_width, src_height, dst_width, dst_height);
 
@@ -362,11 +371,11 @@ int main(int argc, char** argv)
 	vector<pollfd> fds(3);
 
 	fds[0].fd = 0;
-	fds[0].events = POLLIN;
+	fds[0].events =  POLLIN;
 	fds[1].fd = wb.fd();
-	fds[1].events = POLLIN;
+	fds[1].events =  POLLIN;
 	fds[2].fd = card.fd();
-	fds[2].events = POLLIN;
+	fds[2].events =  POLLIN;
 
 	uint32_t dst_frame_num = 0;
 

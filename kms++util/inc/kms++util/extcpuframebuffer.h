@@ -4,6 +4,7 @@
 
 namespace kms
 {
+
 class ExtCPUFramebuffer : public IFramebuffer
 {
 public:
@@ -29,7 +30,7 @@ private:
 		uint32_t size;
 		uint32_t stride;
 		uint32_t offset;
-		uint8_t* map;
+		uint8_t *map;
 	};
 
 	uint32_t m_width;
@@ -39,4 +40,4 @@ private:
 	unsigned m_num_planes;
 	struct FramebufferPlane m_planes[4];
 };
-} // namespace kms
+}

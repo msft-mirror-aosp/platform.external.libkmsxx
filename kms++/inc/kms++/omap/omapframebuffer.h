@@ -12,7 +12,8 @@ class OmapCard;
 class OmapFramebuffer : public Framebuffer
 {
 public:
-	enum Flags {
+	enum Flags
+	{
 		None = 0,
 		Tiled = 1 << 0,
 		MemContig = 1 << 1,
@@ -50,7 +51,7 @@ private:
 		uint8_t* map;
 	};
 
-	void Create(uint32_t width, uint32_t height, PixelFormat format, Flags buffer_flags);
+	void Create(Flags buffer_flags);
 	void Destroy();
 
 	unsigned m_num_planes;
@@ -58,4 +59,4 @@ private:
 
 	PixelFormat m_format;
 };
-} // namespace kms
+}

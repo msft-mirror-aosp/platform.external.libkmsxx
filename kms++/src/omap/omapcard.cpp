@@ -9,6 +9,7 @@ using namespace std;
 
 namespace kms
 {
+
 OmapCard::OmapCard(const string& device)
 	: Card(device)
 {
@@ -20,4 +21,4 @@ OmapCard::~OmapCard()
 	omap_device_del(m_omap_dev);
 }
 
-} // namespace kms
+}

@@ -1,7 +1,6 @@
 #include <cstdio>
 #include <fstream>
 #include <unistd.h>
-#include <cassert>
 
 #include <kms++/kms++.h>
 #include <kms++util/kms++util.h>
@@ -25,10 +24,11 @@ static void read_frame(ifstream& is, DumbFramebuffer* fb, Crtc* crtc, Plane* pla
 }
 
 static const char* usage_str =
-	"Usage: kmsview [options] <file> <width> <height> <fourcc>\n\n"
-	"Options:\n"
-	"  -c, --connector <name>	Output connector\n"
-	"  -t, --time <ms>		Milliseconds to sleep between frames\n";
+		"Usage: kmsview [options] <file> <width> <height> <fourcc>\n\n"
+		"Options:\n"
+		"  -c, --connector <name>	Output connector\n"
+		"  -t, --time <ms>		Milliseconds to sleep between frames\n"
+		;
 
 static void usage()
 {
@@ -42,16 +42,20 @@ int main(int argc, char** argv)
 	string conn_name;
 
 	OptionSet optionset = {
-		Option("c|connector=", [&conn_name](string s) {
+		Option("c|connector=", [&conn_name](string s)
+		{
 			conn_name = s;
 		}),
-		Option("|device=", [&dev_path](string s) {
+		Option("|device=", [&dev_path](string s)
+		{
 			dev_path = s;
 		}),
-		Option("t|time=", [&time](const string& str) {
+		Option("t|time=", [&time](const string& str)
+		{
 			time = stoul(str);
 		}),
-		Option("h|help", []() {
+		Option("h|help", []()
+		{
 			usage();
 			exit(-1);
 		}),
@@ -79,6 +83,7 @@ int main(int argc, char** argv)
 	unsigned fsize = is.tellg();
 	is.seekg(0);
 
+
 	Card card(dev_path);
 	ResourceManager res(card);
 
@@ -93,14 +98,11 @@ int main(int argc, char** argv)
 	for (unsigned i = 0; i < fb->num_planes(); ++i)
 		frame_size += fb->size(i);
 
-	assert(frame_size);
-
 	unsigned num_frames = fsize / frame_size;
 	printf("file size %u, frame size %u, frames %u\n", fsize, frame_size, num_frames);
 
 	for (unsigned i = 0; i < num_frames; ++i) {
-		printf("frame %d", i);
-		fflush(stdout);
+		printf("frame %d", i); fflush(stdout);
 		read_frame(is, fb, crtc, plane);
 		if (!time) {
 			getchar();
