@@ -20,18 +20,30 @@ Framebuffer::Framebuffer(Card& card, uint32_t width, uint32_t height)
 Framebuffer::Framebuffer(Card& card, uint32_t id)
 	: DrmObject(card, id, DRM_MODE_OBJECT_FB)
 {
-	auto fb = drmModeGetFB(card.fd(), id);
+	auto fb = drmModeGetFB2(card.fd(), id);
 
 	if (fb) {
 		m_width = fb->width;
 		m_height = fb->height;
+		m_format = (PixelFormat)fb->pixel_format;
 
-		drmModeFreeFB(fb);
+		drmModeFreeFB2(fb);
 	} else {
 		m_width = m_height = 0;
 	}
 
 	card.m_framebuffers.push_back(this);
+}
+
+void Framebuffer::flush(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+{
+	drmModeClip clip{};
+	clip.x1 = x;
+	clip.y1 = y;
+	clip.x2 = x + width;
+	clip.y2 = y + height;
+
+	drmModeDirtyFB(card().fd(), id(), &clip, 1);
 }
 
 void Framebuffer::flush()

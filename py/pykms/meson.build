@@ -1,27 +1,35 @@
-py3_dep = dependency('python3', required : get_option('pykms'))
 
-if py3_dep.found() == false
+# Python bindings require libutils for now.
+if not get_option('libutils')
+    pybindings_enabled = false
     subdir_done()
 endif
 
-if get_option('system-pybind11').enabled()
-    pybind11_dep = dependency('pybind11')
-elif get_option('system-pybind11').disabled()
-    pybind11_proj = subproject('pybind11')
-    pybind11_dep = pybind11_proj.get_variable('pybind11_dep')
-else
-    pybind11_dep = dependency('pybind11', fallback : ['pybind11', 'pybind11_dep'])
+py3_dep = dependency('python3', required : get_option('pykms'))
+
+if py3_dep.found() == false
+    pybindings_enabled = false
+    subdir_done()
 endif
+
+pybind11_dep = dependency('pybind11', fallback : ['pybind11', 'pybind11_dep'],
+                          required : get_option('pykms'))
+
+if pybind11_dep.found() == false
+    pybindings_enabled = false
+    subdir_done()
+endif
+
+pybindings_enabled = true
 
 pykms_sources = files([
     'pykmsbase.cpp',
     'pykms.cpp',
 ])
 
-if get_option('utils')
+if get_option('libutils')
     pykms_sources += files([
         'pykmsutil.cpp',
-        'pyvid.cpp',
     ])
 endif
 
@@ -37,7 +45,7 @@ pykms_deps = [
     pybind11_dep,
 ]
 
-if get_option('utils')
+if get_option('libutils')
     pykms_deps += [ libkmsxxutil_dep ]
 endif
 
