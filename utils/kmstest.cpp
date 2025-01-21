@@ -32,8 +32,8 @@ struct PropInfo {
 struct PlaneInfo {
 	Plane* plane;
 
-	unsigned x;
-	unsigned y;
+	signed x;
+	signed y;
 	unsigned w;
 	unsigned h;
 
@@ -118,8 +118,8 @@ static void parse_crtc(ResourceManager& resman, Card& card, const string& crtc_s
 
 	const regex modeline_re("(?:(@?)(\\d+):)?" // @12:
 				"(\\d+)," // 33000000,
-				"(\\d+)/(\\d+)/(\\d+)/(\\d+)/([+-])," // 800/210/30/16/-,
-				"(\\d+)/(\\d+)/(\\d+)/(\\d+)/([+-])" // 480/22/13/10/-
+				"(\\d+)/(\\d+)/(\\d+)/(\\d+)/([+-\\?])," // 800/210/30/16/-,
+				"(\\d+)/(\\d+)/(\\d+)/(\\d+)/([+-\\?])" // 480/22/13/10/-
 				"(?:,([i]+))?" // ,i
 	);
 
@@ -202,17 +202,29 @@ static void parse_crtc(ResourceManager& resman, Card& card, const string& crtc_s
 		unsigned hfp = stoul(sm[5]);
 		unsigned hsw = stoul(sm[6]);
 		unsigned hbp = stoul(sm[7]);
-		bool h_pos_sync = sm[8] == "+" ? true : false;
+
+		SyncPolarity h_sync;
+		switch (sm[8].str()[0]) {
+		case '+': h_sync = SyncPolarity::Positive; break;
+		case '-': h_sync = SyncPolarity::Negative; break;
+		default: h_sync = SyncPolarity::Undefined; break;
+		}
 
 		unsigned vact = stoul(sm[9]);
 		unsigned vfp = stoul(sm[10]);
 		unsigned vsw = stoul(sm[11]);
 		unsigned vbp = stoul(sm[12]);
-		bool v_pos_sync = sm[13] == "+" ? true : false;
+
+		SyncPolarity v_sync;
+		switch (sm[13].str()[0]) {
+		case '+': v_sync = SyncPolarity::Positive; break;
+		case '-': v_sync = SyncPolarity::Negative; break;
+		default: v_sync = SyncPolarity::Undefined; break;
+		}
 
 		output.mode = videomode_from_timings(clock / 1000, hact, hfp, hsw, hbp, vact, vfp, vsw, vbp);
-		output.mode.set_hsync(h_pos_sync ? SyncPolarity::Positive : SyncPolarity::Negative);
-		output.mode.set_vsync(v_pos_sync ? SyncPolarity::Positive : SyncPolarity::Negative);
+		output.mode.set_hsync(h_sync);
+		output.mode.set_vsync(v_sync);
 
 		if (sm[14].matched) {
 			for (int i = 0; i < sm[14].length(); ++i) {
@@ -244,7 +256,7 @@ static void parse_plane(ResourceManager& resman, Card& card, const string& plane
 {
 	// 3:400,400-400x400
 	const regex plane_re("(?:(@?)(\\d+):)?" // 3:
-			     "(?:(\\d+),(\\d+)-)?" // 400,400-
+			     "(?:(-?\\d+),(-?\\d+)-)?" // 400,400-
 			     "(\\d+)x(\\d+)"); // 400x400
 
 	smatch sm;
@@ -279,12 +291,12 @@ static void parse_plane(ResourceManager& resman, Card& card, const string& plane
 	pinfo.h = stoul(sm[6]);
 
 	if (sm[3].matched)
-		pinfo.x = stoul(sm[3]);
+		pinfo.x = stol(sm[3]);
 	else
 		pinfo.x = output.mode.hdisplay / 2 - pinfo.w / 2;
 
 	if (sm[4].matched)
-		pinfo.y = stoul(sm[4]);
+		pinfo.y = stol(sm[4]);
 	else
 		pinfo.y = output.mode.vdisplay / 2 - pinfo.h / 2;
 }
@@ -823,7 +835,9 @@ static void set_crtcs_n_planes_atomic(Card& card, const vector<OutputInfo>& outp
 
 	// XXX DRM framework doesn't allow moving an active plane from one crtc to another.
 	// See drm_atomic.c::plane_switching_crtc().
-	// For the time being, disable all crtcs and planes here.
+	// For the time being, try and disable all crtcs and planes here.
+	// Do not check the return value as some simple displays don't support the crtc being
+	// enabled but the primary plane being disabled.
 
 	AtomicReq disable_req(card);
 
@@ -844,9 +858,7 @@ static void set_crtcs_n_planes_atomic(Card& card, const vector<OutputInfo>& outp
 					       { "CRTC_ID", 0 },
 				       });
 
-	r = disable_req.commit_sync(true);
-	if (r)
-		EXIT("Atomic commit failed when disabling: %d\n", r);
+	disable_req.commit_sync(true);
 
 	// Keep blobs here so that we keep ref to them until we have committed the req
 	vector<unique_ptr<Blob>> blobs;

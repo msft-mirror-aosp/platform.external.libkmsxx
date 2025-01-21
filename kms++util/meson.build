@@ -1,3 +1,10 @@
+if not get_option('libutils')
+    libutils_enabled = false
+    subdir_done()
+endif
+
+libutils_enabled = true
+
 libkmsxxutil_sources = files([
     'src/colorbar.cpp',
     'src/color.cpp',
@@ -8,7 +15,6 @@ libkmsxxutil_sources = files([
     'src/resourcemanager.cpp',
     'src/strhelpers.cpp',
     'src/testpat.cpp',
-    'src/videodevice.cpp',
 ])
 
 public_headers = [
@@ -20,7 +26,6 @@ public_headers = [
     'inc/kms++util/opts.h',
     'inc/kms++util/extcpuframebuffer.h',
     'inc/kms++util/resourcemanager.h',
-    'inc/kms++util/videodevice.h',
 ]
 
 private_includes = include_directories('src', 'inc')
@@ -41,7 +46,8 @@ libkmsxxutil = library('kms++util',
                        install : true,
                        include_directories : private_includes,
                        dependencies : libkmsxxutil_deps,
-                       cpp_args : libkmsxxutil_args)
+                       cpp_args : libkmsxxutil_args,
+                       version : meson.project_version())
 
 libkmsxxutil_dep = declare_dependency(include_directories : public_includes,
                                       link_with : libkmsxxutil)

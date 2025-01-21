@@ -1,3 +1,14 @@
+if not get_option('kmscube')
+   kmscube_enabled = false
+   subdir_done()
+endif
+
+if not get_option('libutils')
+    error('"kmscube" option requires "libutils" option enabled')
+endif
+
+kmscube_enabled = true
+
 kmscube_sources = files([
     'cube.cpp',
     'cube-egl.cpp',
