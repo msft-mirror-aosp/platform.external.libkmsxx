@@ -2,6 +2,7 @@ project('kms++', 'cpp',
     default_options : [
         'cpp_std=c++17',
     ],
+    version: '0.0.0',
 )
 
 cpp = meson.get_compiler('cpp')
@@ -23,30 +24,30 @@ endif
 
 add_project_arguments(cpp_arguments, language : 'cpp')
 
-link_arguments = []
-
-if get_option('static-libc')
-    link_arguments += ['-static-libgcc', '-static-libstdc++']
-endif
-
-add_global_link_arguments(link_arguments, language : 'cpp')
-
 libfmt_dep = dependency('fmt')
 
 libdrmomap_dep = dependency('libdrm_omap', required : get_option('omap'))
 
-subdir('kms++')
+if libdrmomap_dep.found()
+    add_global_arguments('-DHAS_LIBDRM_OMAP', language : 'cpp')
+endif
 
 if get_option('libutils')
-    subdir('kms++util')
+	add_global_arguments('-DHAS_KMSXXUTIL', language : 'cpp')
 endif
 
-if get_option('utils')
-    subdir('utils')
-endif
-
+subdir('kms++')
+subdir('kms++util')
+subdir('utils')
+subdir('kmscube')
 subdir('py')
 
-if get_option('kmscube')
-    subdir('kmscube')
-endif
+summary({
+            'omapdrm extensions': omapdrm_enabled,
+            'kms++utils library': libutils_enabled,
+            'Python bindings': pybindings_enabled,
+            'kmscube': kmscube_enabled,
+            'Utilities': utils_enabled,
+        },
+        section : 'Configuration',
+        bool_yn : true)
