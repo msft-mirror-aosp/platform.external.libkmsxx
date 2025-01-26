@@ -11,6 +11,7 @@
 
 #include <kms++/kms++.h>
 #include <kms++util/kms++util.h>
+#include "cube.h"
 #include "cube-egl.h"
 #include "cube-gles2.h"
 
@@ -48,10 +49,10 @@ private:
 class GbmSurface
 {
 public:
-	GbmSurface(GbmDevice& gdev, int width, int height)
+	GbmSurface(GbmDevice& gdev, int width, int height, uint32_t format)
 	{
 		m_surface = gbm_surface_create(gdev.handle(), width, height,
-					       GBM_FORMAT_XRGB8888,
+					       format,
 					       GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
 		FAIL_IF(!m_surface, "failed to create gbm surface");
 	}
@@ -92,7 +93,7 @@ public:
 		: card(card), egl(egl), m_width(width), m_height(height),
 		  bo_prev(0), bo_next(0)
 	{
-		gsurface = unique_ptr<GbmSurface>(new GbmSurface(gdev, width, height));
+		gsurface = unique_ptr<GbmSurface>(new GbmSurface(gdev, width, height, egl.native_visual_id()));
 		esurface = eglCreateWindowSurface(egl.display(), egl.config(), gsurface->handle(), NULL);
 		FAIL_IF(esurface == EGL_NO_SURFACE, "failed to create egl surface");
 	}
@@ -250,6 +251,10 @@ private:
 		if (m_plane)
 			m_surface2->free_prev();
 
+		if (s_num_frames && m_frame_num >= s_num_frames) {
+			s_need_exit = true;
+		}
+
 		if (s_need_exit)
 			return;
 
@@ -289,7 +294,7 @@ private:
 		s_flip_pending++;
 	}
 
-	int m_frame_num;
+	unsigned m_frame_num;
 	chrono::steady_clock::time_point m_t1;
 
 	Connector* m_connector;
@@ -314,7 +319,7 @@ void main_gbm()
 	FAIL_IF(!card.has_atomic(), "No atomic modesetting");
 
 	GbmDevice gdev(card);
-	EglState egl(gdev.handle());
+	EglState egl(gdev.handle(), GBM_FORMAT_XRGB8888);
 
 	ResourceManager resman(card);
 
