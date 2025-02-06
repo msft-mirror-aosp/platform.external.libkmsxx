@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/tomba/kmsxx.svg?branch=master)](https://travis-ci.org/tomba/kmsxx)
+[![Build Status](https://github.com/tomba/kmsxx/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/tomba/kmsxx/actions/workflows/c-cpp.yml)
 
 # kms++ - C++ library for kernel mode setting
 
@@ -21,16 +21,8 @@ Also included are some simple utilities for KMS and python bindings for kms++.
 
 ## Build instructions:
 
-To build the Python bindings you need to set up the git-submodule for pybind11:
-
 ```
-git submodule update --init
-```
-
-And to compile:
-
-```
-meson build
+meson setup build
 ninja -C build
 ```
 

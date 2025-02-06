@@ -63,6 +63,9 @@ if libdrmomap_dep.found()
         'src/omap/omapcard.cpp',
         'src/omap/omapframebuffer.cpp',
     ])
+    omapdrm_enabled = true
+else
+    omapdrm_enabled = false
 endif
 
 libkmsxx_deps = [ libdrm_dep, libfmt_dep, libdrmomap_dep ]
@@ -71,7 +74,8 @@ libkmsxx = library('kms++',
                    libkmsxx_sources,
                    install : true,
                    include_directories : private_includes,
-                   dependencies : libkmsxx_deps)
+                   dependencies : libkmsxx_deps,
+                   version : meson.project_version())
 
 
 libkmsxx_dep = declare_dependency(include_directories : public_includes,

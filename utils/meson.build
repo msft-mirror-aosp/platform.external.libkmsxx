@@ -1,3 +1,15 @@
+if not get_option('utils')
+    utils_enabled = false
+    subdir_done()
+endif
+
+if not get_option('libutils')
+    utils_enabled = false
+    subdir_done()
+endif
+
+utils_enabled = true
+
 common_deps = [ libkmsxx_dep, libkmsxxutil_dep, libfmt_dep ]
 
 libevdev_dep = dependency('libevdev', required : false)
@@ -12,6 +24,3 @@ executable('kmsblank', 'kmsblank.cpp', dependencies : [ common_deps ], install :
 if libevdev_dep.found()
     executable('kmstouch', 'kmstouch.cpp', dependencies : [ common_deps, libevdev_dep ], install : false)
 endif
-
-executable('omap-wbcap', 'omap-wbcap.cpp', dependencies : [ common_deps ], install : false)
-executable('omap-wbm2m', 'omap-wbm2m.cpp', dependencies : [ common_deps ], install : false)

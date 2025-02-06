@@ -31,6 +31,10 @@ enum class PixelFormat : uint32_t {
 	YVYU = MakeFourCC("YVYU"),
 	VYUY = MakeFourCC("VYUY"),
 
+	Y210 = MakeFourCC("Y210"),
+	Y212 = MakeFourCC("Y212"),
+	Y216 = MakeFourCC("Y216"),
+
 	XRGB8888 = MakeFourCC("XR24"),
 	XBGR8888 = MakeFourCC("XB24"),
 	RGBX8888 = MakeFourCC("RX24"),
@@ -66,12 +70,12 @@ enum class PixelFormat : uint32_t {
 	BGRA1010102 = MakeFourCC("BA30"),
 };
 
-static inline PixelFormat FourCCToPixelFormat(const std::string& fourcc)
+inline PixelFormat FourCCToPixelFormat(const std::string& fourcc)
 {
 	return (PixelFormat)MakeFourCC(fourcc.c_str());
 }
 
-static inline std::string PixelFormatToFourCC(PixelFormat f)
+inline std::string PixelFormatToFourCC(PixelFormat f)
 {
 	char buf[5] = { (char)(((uint32_t)f >> 0) & 0xff),
 			(char)(((uint32_t)f >> 8) & 0xff),
